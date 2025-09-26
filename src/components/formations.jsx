@@ -11,10 +11,20 @@ const Formation = () => {
             <div className="flex items-center">
               <img src="picture/enigma-school.jpg" alt="Image 1" className="w-36 h-16 mr-4" />
               <a href="https://enigma-school.com/" target="_blank" className="text-white text-3xl font-serif">
-                BAC +2 Responsable de projet info. <br />
+                BAC +4 Responsable de projet info. <br />
                 Enigma <br />
                 Lille <br />
-                2022 - 2024
+                2025 - aujourd'hui
+              </a>
+            </div>
+            <br />
+            <div className="flex items-center">
+              <img src="picture/enigma-school.jpg" alt="Image 1" className="w-36 h-16 mr-4" />
+              <a href="https://enigma-school.com/" target="_blank" className="text-white text-3xl font-serif">
+                Obtention d'un BAC +3 Responsable de projet informatiques <br />
+                Enigma <br />
+                Lille <br />
+                2022 - 2025
               </a>
             </div>
             <br />

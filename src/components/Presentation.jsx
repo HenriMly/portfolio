@@ -9,9 +9,9 @@ const Presentation = () => {
     <div className="border-4 bg-black border-black rounded-bl-lg p-12 transition duration-300 hover:border-red-600">
       <div className="gap-8">
         <div className="flex ">
-          <img src="picture/moi.jpg" alt="Image 2" className="rounded-r-lg h-56 mr-4" />
+          <img src="picture/moi2.jpg" alt="Image 2" className="rounded-r-lg h-56 mr-4" />
           <a className="text-white text-2xl font-serif">
-          Henri, 19 ans, étudiant en informatique à Enigma. 
+          Henri, 20 ans, étudiant en informatique à Enigma. 
           Je suis fasciné par le développement informatique. 
           Mon but dans la vie? Faire disparaître les bugs 
           plus vite que mon ombre et rendre le code aussi hilarant 

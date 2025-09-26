@@ -23,8 +23,8 @@ const Coodonnees = () => {
             </div><br />
             <div className="flex items-center">
             <img src="picture/gi.png" alt="Image 2" className="w-16 h-16 mr-4" />
-              <a href="https://github.com/Arhoverse" target="_blank" className="text-white text-2xl font-serif">
-                Github : Arhoverse
+              <a href="https://github.com/HenriMly" target="_blank" className="text-white text-2xl font-serif">
+                Github : HenriMly
               </a>
             </div><br />
             <div className="flex items-center">

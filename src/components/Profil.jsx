@@ -10,14 +10,14 @@ const Profil = () => {
           <div className="grid grid-cols-2 gap-8">
             <div className="flex items-center">
               <img src="picture/gateau.jpg" alt="Image 1" className="w-16 h-16 mr-4" />
-              <a href="https://www.google.com/search?q=10+9&sca_esv=f3458d61af57fc2d&udm=2&biw=1920&bih=911&sxsrf=ACQVn0_LXzGML4hsY2eGi89e27ZqO_aIqA%3A1711702382141&ei=boEGZoqnCKeIkdUPuZuBiAQ&ved=0ahUKEwiKlsujjJmFAxUnRKQEHblNAEEQ4dUDCBE&uact=5&oq=10+9&gs_lp=Egxnd3Mtd2l6LXNlcnAiBDEwIDkyBRAAGIAEMgUQABiABDIFEAAYgAQyBRAAGIAEMgQQABgeMgQQABgeMgQQABgeMgQQABgeMgQQABgeMgQQABgeSIIlUPQTWK4hcAR4AJABAJgBN6ABzQGqAQE0uAEDyAEA-AEBmAIIoAL0AagCCsICChAAGIAEGIoFGEPCAggQABiABBixA8ICBBAjGCfCAg0QABiABBiKBRhDGLEDwgIHECMY6gIYJ8ICBBAAGAOYAweIBgGSBwE4oAfKEw&sclient=gws-wiz-serp#vhid=bCRrwp7unhsGEM&vssid=mosaic" target="_blank" className="text-white text-3xl font-serif">
-                19 ans
+              <a href="https://www.google.com/search?sa=X&sca_esv=6fbc5b85f7533cfa&udm=2&fbs=AIIjpHx4nJjfGojPVHhEACUHPiMQ_pbg5bWizQs3A_kIenjtcpTTqBUdyVgzq0c3_k8z34EAuM72an33lMW6RWde9ePJpwNFtZw3UQvFloZy04_0a2t90M1pjb-hlKRN5_Y-eT7ZEcVhb6tlz5ZvzwJfgnPcI9sO9tdtG4H8zxL-DrxbEkQcUjNRbZ70noEbDq9g2_ndCyCt&q=20+ans&ved=2ahUKEwjz38O5s_ePAxXQVKQEHULLFJAQtKgLegQIEBAB&biw=1920&bih=911&dpr=1" target="_blank" className="text-white text-3xl font-serif">
+                20 ans
               </a>
             </div>
             <div className="flex items-center">
               <img src="picture/loca.jpg" alt="Image 2" className="w-16 h-16 mr-4" />
-              <a href="https://www.google.fr/maps/place/Saint-Omer/@50.7727386,2.244923,13.25z/data=!4m6!3m5!1s0x47dcf893912760af:0x40af13e8163d5e0!8m2!3d50.7522828!4d2.2543638!16zL20vMDE3ZnBo?entry=ttu" target="_blank" className="text-white text-3xl font-serif">
-                Saint-omer
+              <a href="https://www.google.com/maps/place/Fives/@50.6325257,3.089385,1650m/data=!3m1!1e3!4m6!3m5!1s0x47c2d5fbd9e56125:0x289d18f335eb5e1e!8m2!3d50.63294!4d3.0906735!16s%2Fg%2F12240nwp?entry=ttu&g_ep=EgoyMDI1MDkyNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" className="text-white text-3xl font-serif">
+                Métropole Lilloise
               </a>
             </div>
             <div className="flex items-center">
