@@ -228,6 +228,9 @@ const SpaceInvaders = () => {
                     <p className="max-w-xs text-sm text-white/70">
                       Repousse les vagues d'aliens et inscris ton score au classement.
                     </p>
+                    <p className="max-w-xs text-sm text-yellow-400">
+                      Attrape les capsules jaunes : tir rapide, triple ou perçant.
+                    </p>
                     <button type="button" onClick={start} className={primaryButtonClass}>
                       Jouer
                     </button>

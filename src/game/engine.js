@@ -5,12 +5,10 @@ export const WIDTH = 400;
 export const HEIGHT = 480;
 
 const PX = 2; // taille d'un pixel de sprite
-const COLS = 7;
-const ROWS = 5;
-const CELL_X = 40;
-const CELL_Y = 30;
-const GRID_X = 68;
-const GRID_Y = 56;
+const CELL_X = 36;
+const CELL_Y = 28;
+const CELL_W = 24; // largeur du plus gros alien
+const GRID_Y = 44;
 const GROUND_Y = HEIGHT - 16;
 const PLAYER_Y = HEIGHT - 44;
 const BUNKER_Y = PLAYER_Y - 52;
@@ -18,14 +16,62 @@ const BUNKER_CELL = 4;
 const PLAYER_SPEED = 220;
 const PLAYER_BULLET_SPEED = 430;
 const ALIEN_BULLET_SPEED = 170;
+const ALIEN_BASE_SPEED = 14;
+const ALIEN_WAVE_SPEED = 2; // vitesse ajoutée à chaque vague
+const ALIEN_DROP = 10;
 
-// Si tu changes la cadence de tir ou les points, adapte MAX_POINTS_PER_SECOND dans server/server.js
+// Si tu changes les cadences de tir, les points ou les bonus, adapte MAX_POINTS_PER_SECOND dans server/server.js
 const FIRE_COOLDOWN = 0.4;
+const RAPID_COOLDOWN = 0.16;
+const TRIPLE_SPREAD = 90; // vitesse latérale des deux tirs de côté
+const PIERCE_COUNT = 3; // nombre d'aliens traversés par un tir perçant
+const POWER_DURATION = 10;
 const POINTS = { squid: 30, crab: 20, octopus: 10 };
-const ROW_TYPES = ["squid", "crab", "crab", "octopus", "octopus"];
+
+// Les bonus tombent en zigzag, plus vite sur les côtés que le vaisseau : il faut anticiper
+const BONUS_SIZE = 16;
+const BONUS_FALL_SPEED = 120;
+const BONUS_SWAY = 55;
+const BONUS_SWAY_SPEED = 5.5;
+const POWERS = {
+  rapid: { label: "TIR RAPIDE", letter: "R" },
+  triple: { label: "TIR TRIPLE", letter: "T" },
+  pierce: { label: "TIR PERÇANT", letter: "P" },
+};
 
 const RED = "#dc2626";
 const WHITE = "#ffffff";
+const YELLOW = "#facc15";
+
+// Une disposition par vague, de plus en plus fournie. # = un alien.
+const FORMATIONS = [
+  { name: "BLOC", rows: ["#######", "#######", "#######", "#######", "#######"] },
+  { name: "FLÈCHE", rows: ["#########", "#########", ".#######.", ".#######.", "..#####..", "...###..."] },
+  { name: "LOSANGE", rows: ["..#####..", ".#######.", "#########", "#########", ".#######.", "..#####.."] },
+  {
+    name: "SABLIER",
+    rows: ["#########", ".#######.", "..#####..", "...###...", "..#####..", ".#######.", "#########"],
+  },
+  { name: "ESCADRONS", rows: ["####.####", "####.####", "####.####", "####.####", "####.####", "####.####"] },
+  {
+    name: "FORTERESSE",
+    rows: ["#########", "#########", "##.....##", "##.###.##", "##.....##", "#########", "#########"],
+  },
+  {
+    name: "CRÉNEAUX",
+    rows: ["#.#.#.#.#", "#########", "#########", "#########", "#########", "#########", "#.#.#.#.#"],
+  },
+  {
+    name: "MUR",
+    rows: ["#########", "#########", "#########", "#########", "#########", "#########", "#########"],
+  },
+];
+
+// Après la dernière formation, on reprend les quatre plus grosses
+function formationFor(wave) {
+  if (wave <= FORMATIONS.length) return FORMATIONS[wave - 1];
+  return FORMATIONS[4 + ((wave - FORMATIONS.length - 1) % 4)];
+}
 
 // Chaque alien a deux images pour l'animation
 const SPRITES = {
@@ -103,6 +149,13 @@ const BUNKER_SHAPE = [
 ];
 
 const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+// La rangée du haut rapporte le plus, la moitié basse le moins
+function rowType(row, rowCount) {
+  if (row === 0) return "squid";
+  return row < Math.ceil(rowCount / 2) ? "crab" : "octopus";
+}
 
 function createBunkers() {
   const count = 3;
@@ -123,29 +176,54 @@ function createBunkers() {
 }
 
 function spawnWave(game) {
-  // À chaque vague, les aliens démarrent un peu plus bas
-  const offsetY = Math.min(game.wave - 1, 4) * 14;
+  const formation = formationFor(game.wave);
+  const cols = formation.rows[0].length;
+  const left = (WIDTH - ((cols - 1) * CELL_X + CELL_W)) / 2;
   game.aliens = [];
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const type = ROW_TYPES[row];
+  formation.rows.forEach((line, row) => {
+    for (let col = 0; col < cols; col++) {
+      if (line[col] !== "#") continue;
+      const type = rowType(row, formation.rows.length);
       const w = SPRITES[type][0][0].length * PX;
       game.aliens.push({
         type,
         col,
-        x: GRID_X + col * CELL_X + (24 - w) / 2,
-        y: GRID_Y + offsetY + row * CELL_Y,
+        x: left + col * CELL_X + (CELL_W - w) / 2,
+        y: GRID_Y + row * CELL_Y,
         w,
         h: 8 * PX,
         alive: true,
       });
     }
-  }
+  });
+  game.formation = formation.name;
+  game.waveTotal = game.aliens.length;
+  game.kills = 0;
+  // Un bonus par vague, parfois deux, lâché par un alien détruit à un moment tiré au hasard
+  const bonusCount = Math.random() < 0.35 ? 2 : 1;
+  game.bonusKills = Array.from({ length: bonusCount }, () =>
+    Math.floor(game.waveTotal * (0.2 + Math.random() * 0.65))
+  );
   game.direction = 1;
   game.bullets = [];
   game.alienBullets = [];
   game.bunkers = createBunkers();
   game.fireTimer = 1;
+}
+
+function spawnBonus(game, alien) {
+  const types = Object.keys(POWERS);
+  const center = alien.x + alien.w / 2 - BONUS_SIZE / 2;
+  game.bonuses.push({
+    type: types[Math.floor(Math.random() * types.length)],
+    // le zigzag reste entièrement dans l'écran
+    baseX: clamp(center, 4 + BONUS_SWAY, WIDTH - BONUS_SIZE - 4 - BONUS_SWAY),
+    x: center,
+    y: alien.y,
+    w: BONUS_SIZE,
+    h: BONUS_SIZE,
+    age: 0,
+  });
 }
 
 export function createGame() {
@@ -155,8 +233,12 @@ export function createGame() {
     wave: 1,
     over: false,
     time: 0,
-    player: { x: WIDTH / 2 - 13, y: PLAYER_Y, w: 13 * PX, h: 8 * PX, cooldown: 0, invincible: 0 },
+    player: { x: WIDTH / 2 - 13, y: PLAYER_Y, w: 13 * PX, h: 8 * PX, cooldown: 0, invincible: 0, power: null },
     aliens: [],
+    formation: "",
+    waveTotal: 0,
+    kills: 0,
+    bonusKills: [],
     direction: 1,
     frameTimer: 0,
     fireTimer: 1,
@@ -164,7 +246,9 @@ export function createGame() {
     bullets: [],
     alienBullets: [],
     bunkers: [],
+    bonuses: [],
     effects: [],
+    notice: null,
   };
   spawnWave(game);
   return game;
@@ -185,19 +269,33 @@ export function update(game, dt, input) {
   // Joueur
   if (input.left) player.x -= PLAYER_SPEED * dt;
   if (input.right) player.x += PLAYER_SPEED * dt;
-  player.x = Math.max(4, Math.min(WIDTH - player.w - 4, player.x));
+  player.x = clamp(player.x, 4, WIDTH - player.w - 4);
   player.cooldown -= dt;
   player.invincible -= dt;
+  if (player.power && (player.power.time -= dt) <= 0) player.power = null;
+
   if (input.fire && player.cooldown <= 0) {
-    game.bullets.push({ x: player.x + player.w / 2 - 1, y: player.y - 8, w: 2, h: 8 });
-    player.cooldown = FIRE_COOLDOWN;
+    const power = player.power ? player.power.type : null;
+    const pierce = power === "pierce";
+    const shot = (vx) => ({
+      x: player.x + player.w / 2 - (pierce ? 2 : 1),
+      y: player.y - (pierce ? 12 : 8),
+      w: pierce ? 4 : 2,
+      h: pierce ? 12 : 8,
+      vx,
+      strength: pierce ? PIERCE_COUNT : 1, // nombre d'aliens que le tir peut encore détruire
+      boosted: power !== null,
+    });
+    game.bullets.push(shot(0));
+    if (power === "triple") game.bullets.push(shot(-TRIPLE_SPREAD), shot(TRIPLE_SPREAD));
+    player.cooldown = power === "rapid" ? RAPID_COOLDOWN : FIRE_COOLDOWN;
   }
 
   const alive = game.aliens.filter((alien) => alien.alive);
   if (alive.length > 0) {
     // Moins il reste d'aliens, plus ils vont vite
-    const killed = 1 - alive.length / (COLS * ROWS);
-    const speed = (18 + game.wave * 4) * (1 + killed * 2.5);
+    const killed = 1 - alive.length / game.waveTotal;
+    const speed = (ALIEN_BASE_SPEED + game.wave * ALIEN_WAVE_SPEED) * (1 + killed * 2.5);
     const left = Math.min(...alive.map((alien) => alien.x));
     const right = Math.max(...alive.map((alien) => alien.x + alien.w));
     let dx = game.direction * speed * dt;
@@ -206,7 +304,7 @@ export function update(game, dt, input) {
       // Arrivés au bord : demi-tour et descente d'un cran
       game.direction *= -1;
       dx = 0;
-      dy = 12;
+      dy = ALIEN_DROP;
     }
     alive.forEach((alien) => {
       alien.x += dx;
@@ -216,16 +314,19 @@ export function update(game, dt, input) {
 
     // Tir de l'alien le plus bas d'une colonne prise au hasard
     game.fireTimer -= dt;
-    if (game.fireTimer <= 0 && game.alienBullets.length < 2 + game.wave) {
+    if (game.fireTimer <= 0 && game.alienBullets.length < Math.min(2 + game.wave, 7)) {
       const columns = [...new Set(alive.map((alien) => alien.col))];
       const col = columns[Math.floor(Math.random() * columns.length)];
       const shooter = alive.filter((alien) => alien.col === col).reduce((low, alien) => (alien.y > low.y ? alien : low));
       game.alienBullets.push({ x: shooter.x + shooter.w / 2 - 1.5, y: shooter.y + shooter.h, w: 3, h: 9 });
-      game.fireTimer = Math.max(0.35, 1.1 - game.wave * 0.1) * (0.6 + Math.random() * 0.8);
+      game.fireTimer = Math.max(0.4, 1.1 - game.wave * 0.08) * (0.6 + Math.random() * 0.8);
     }
   }
 
-  game.bullets.forEach((bullet) => (bullet.y -= PLAYER_BULLET_SPEED * dt));
+  game.bullets.forEach((bullet) => {
+    bullet.x += bullet.vx * dt;
+    bullet.y -= PLAYER_BULLET_SPEED * dt;
+  });
   game.alienBullets.forEach((bullet) => (bullet.y += ALIEN_BULLET_SPEED * dt));
 
   // Tirs du joueur sur les aliens
@@ -233,9 +334,16 @@ export function update(game, dt, input) {
     const target = alive.find((alien) => alien.alive && overlap(alien, bullet));
     if (!target) return;
     target.alive = false;
-    bullet.hit = true;
+    bullet.strength -= 1;
+    if (bullet.strength <= 0) bullet.hit = true;
     game.score += POINTS[target.type];
     game.effects.push({ x: target.x + target.w / 2, y: target.y + target.h / 2, ttl: 0.25 });
+    game.kills += 1;
+    const bonusIndex = game.bonusKills.indexOf(game.kills);
+    if (bonusIndex !== -1) {
+      game.bonusKills.splice(bonusIndex, 1);
+      spawnBonus(game, target);
+    }
   });
 
   // Bunkers : chaque tir détruit les blocs qu'il touche, les aliens les écrasent
@@ -249,18 +357,35 @@ export function update(game, dt, input) {
     game.bunkers = game.bunkers.filter((cell) => !alive.some((alien) => alien.alive && overlap(cell, alien)));
   }
 
-  // Tirs des aliens sur le joueur
+  // Bonus : chute en zigzag, à attraper avec le vaisseau
+  game.bonuses.forEach((bonus) => {
+    bonus.age += dt;
+    bonus.y += BONUS_FALL_SPEED * dt;
+    bonus.x = bonus.baseX + Math.sin(bonus.age * BONUS_SWAY_SPEED) * BONUS_SWAY;
+    if (overlap(bonus, player)) {
+      bonus.caught = true;
+      player.power = { type: bonus.type, time: POWER_DURATION };
+      game.notice = { text: `${POWERS[bonus.type].label} !`, ttl: 1.2 };
+    }
+  });
+  game.bonuses = game.bonuses.filter((bonus) => !bonus.caught && bonus.y < GROUND_Y);
+
+  // Tirs des aliens sur le joueur : une vie en moins, et le bonus en cours est perdu
   if (player.invincible <= 0 && game.alienBullets.some((bullet) => !bullet.hit && overlap(bullet, player))) {
     game.lives -= 1;
     player.invincible = 1.5;
+    player.power = null;
     game.alienBullets = [];
     game.effects.push({ x: player.x + player.w / 2, y: player.y + player.h / 2, ttl: 0.4 });
     if (game.lives <= 0) game.over = true;
   }
 
-  game.bullets = game.bullets.filter((bullet) => !bullet.hit && bullet.y + bullet.h > 0);
+  game.bullets = game.bullets.filter(
+    (bullet) => !bullet.hit && bullet.y + bullet.h > 0 && bullet.x + bullet.w > 0 && bullet.x < WIDTH
+  );
   game.alienBullets = game.alienBullets.filter((bullet) => !bullet.hit && bullet.y + bullet.h < GROUND_Y);
   game.effects = game.effects.filter((effect) => (effect.ttl -= dt) > 0);
+  if (game.notice && (game.notice.ttl -= dt) <= 0) game.notice = null;
 
   // Invasion : un alien a atteint la ligne du joueur
   if (alive.some((alien) => alien.alive && alien.y + alien.h >= player.y)) game.over = true;
@@ -313,19 +438,54 @@ export function draw(ctx, game) {
     drawSprite(ctx, PLAYER_SPRITE, player.x, player.y, PX, RED);
   }
 
-  ctx.fillStyle = RED;
-  game.bullets.forEach((bullet) => ctx.fillRect(Math.round(bullet.x), Math.round(bullet.y), bullet.w, bullet.h));
+  game.bullets.forEach((bullet) => {
+    ctx.fillStyle = bullet.boosted ? YELLOW : RED;
+    ctx.fillRect(Math.round(bullet.x), Math.round(bullet.y), bullet.w, bullet.h);
+  });
   ctx.fillStyle = WHITE;
   game.alienBullets.forEach((bullet) => ctx.fillRect(Math.round(bullet.x), Math.round(bullet.y), bullet.w, bullet.h));
+
+  // Bonus : capsule jaune marquée d'une lettre, avec un contour qui clignote
+  ctx.font = "bold 12px monospace";
+  ctx.textBaseline = "middle";
+  game.bonuses.forEach((bonus) => {
+    const x = Math.round(bonus.x);
+    const y = Math.round(bonus.y);
+    if (Math.floor(bonus.age * 8) % 2 === 0) {
+      ctx.fillStyle = WHITE;
+      ctx.fillRect(x - 1, y - 1, bonus.w + 2, bonus.h + 2);
+    }
+    ctx.fillStyle = YELLOW;
+    ctx.fillRect(x, y, bonus.w, bonus.h);
+    ctx.fillStyle = "#000000";
+    ctx.fillText(POWERS[bonus.type].letter, x + bonus.w / 2, y + bonus.h / 2 + 1);
+  });
+  ctx.textBaseline = "top";
 
   game.effects.forEach((effect) => drawSprite(ctx, EXPLOSION_SPRITE, effect.x - 7, effect.y - 7, PX, WHITE));
 
   ctx.fillStyle = RED;
   ctx.fillRect(0, GROUND_Y, WIDTH, 2);
 
+  // Bonus en cours : nom et temps restant, sous la ligne du sol
+  if (player.power) {
+    ctx.fillStyle = YELLOW;
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(POWERS[player.power.type].label, 10, GROUND_Y + 5);
+    ctx.fillRect(90, GROUND_Y + 7, 80 * (player.power.time / POWER_DURATION), 5);
+    ctx.textAlign = "center";
+  }
+
   if (game.waveDelay > 0) {
     ctx.fillStyle = WHITE;
     ctx.font = "bold 22px monospace";
     ctx.fillText(`VAGUE ${game.wave}`, WIDTH / 2, HEIGHT / 2 - 40);
+    ctx.font = "bold 12px monospace";
+    ctx.fillText(formationFor(game.wave).name, WIDTH / 2, HEIGHT / 2 - 12);
+  } else if (game.notice) {
+    ctx.fillStyle = YELLOW;
+    ctx.font = "bold 16px monospace";
+    ctx.fillText(game.notice.text, WIDTH / 2, HEIGHT / 2 + 10);
   }
 }
