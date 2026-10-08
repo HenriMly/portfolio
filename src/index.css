@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Défilement fluide vers les ancres du menu */
+  html {
+    scroll-behavior: smooth;
+  }
+}

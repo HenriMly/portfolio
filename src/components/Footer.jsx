@@ -1,26 +1,31 @@
 import React from "react";
 
+const links = [
+  { href: "#presentation", label: "Profil" },
+  { href: "#informations", label: "Informations" },
+  { href: "#competences", label: "Compétences" },
+  { href: "#formations", label: "Formations" },
+  { href: "#experiences", label: "Expériences" },
+  { href: "#coordonnees", label: "Contact" },
+];
 
 const Footer = () => {
-    return (
-        <footer className="bg-red-600 text-white py-4">
-            <div className="container mx-auto flex justify-between items-center">
-                <div>
-                    <p>Réalisé avec React.js</p>
-                </div>
-                <div>
-                    <ul className="flex space-x-4">
-                        <li><a href="#presentation" className="hover:white">Profil</a></li>
-                        <li><a href="#informations" className="hover:white">Informations</a></li>
-                        <li><a href="#competences" className="hover:white">Compétences</a></li>
-                        <li><a href="#formations" className="hover:white">Formations</a></li>
-                        <li><a href="#experiences" className="hover:white">Expériences</a></li>
-                        <li><a href="#coordonnees" className="hover:white">Contact</a></li>
-                    </ul>
-                </div>
-            </div>
-        </footer>
-    );
-  }
-  
-  export default Footer;
+  return (
+    <footer className="bg-red-600 px-4 py-5 text-white sm:px-6 lg:pl-52 lg:pr-8">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 text-center lg:flex-row lg:justify-between">
+        <p>Réalisé avec React.js</p>
+        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+          {links.map((link) => (
+            <li key={link.href}>
+              <a href={link.href} className="hover:underline">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;

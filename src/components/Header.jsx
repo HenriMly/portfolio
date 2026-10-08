@@ -1,41 +1,69 @@
-import React from "react";
+import React, { useState } from "react";
+
+const links = [
+  { href: "#presentation", label: "Profil" },
+  { href: "#informations", label: "Informations" },
+  { href: "#competences", label: "Compétences" },
+  { href: "#formations", label: "Formations" },
+  { href: "#experiences", label: "Expériences" },
+  { href: "#coordonnees", label: "Coordonnées" },
+];
+
+const linkClass =
+  "rounded-md border-2 border-white px-3 py-2 text-sm font-medium text-white transition duration-300 ease-in-out hover:bg-white hover:text-red-600";
 
 const Header = () => {
-    return (
-        <nav className="max-w-3xl bg-red-600 rounded-r-lg border-2 border-black  transition duration-300 ease-in-out hover:shadow-lg dark:hover:shadow-black/30  fixed top-60 h-100 w-44 z-10">
-        <div className="mx-auto ">
-            <div className="relative flex items-center justify-between">
-                <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                    <button type="button" className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
-                        <span className="absolute -inset-0.5"></span>
-                        <span className="sr-only">Open main menu</span>
-                        <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                        </svg>
-                        <svg className="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-                    <div className="hidden sm:ml-6 sm:block">
-                        <div className="flex flex-col space-y-4">
-                            <p>&nbsp;</p>
-                            <a href="#presentation" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Profil</a>
-                            <a href="#informations" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Informations</a>
-                            <a href="#competences" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Compétences</a>
-                            <a href="#formations" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Formations</a>
-                            <a href="#experiences" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Expériences</a>
-                            <a href="#coordonnees" className="text-white hover:bg-white hover:text-red-600 border-2 border-white rounded-md px-3 py-2 text-sm font-medium transition duration-300 ease-in-out hover:scale-110">Coordonnées</a>
-                            <p>&nbsp;</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile et tablette : barre en haut + menu déroulant */}
+      <header className="sticky top-0 z-20 bg-red-600 lg:hidden">
+        <div className="flex h-14 items-center justify-between border-b-2 border-black px-4 sm:px-6">
+          <a href="#presentation" className="text-lg font-bold text-white">
+            Henri Mailly
+          </a>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            aria-controls="mobile-menu"
+            aria-expanded={open}
+          >
+            <span className="sr-only">{open ? "Fermer le menu" : "Ouvrir le menu"}</span>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+              {open ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              )}
+            </svg>
+          </button>
         </div>
-    </nav>
-    
-    );
-  }
-  
-  export default Header;
+        {open && (
+          <nav
+            id="mobile-menu"
+            className="absolute inset-x-0 top-full grid grid-cols-2 gap-2 border-b-2 border-black bg-red-600 p-4 shadow-lg sm:grid-cols-3 sm:px-6"
+          >
+            {links.map((link) => (
+              <a key={link.href} href={link.href} onClick={() => setOpen(false)} className={`${linkClass} text-center`}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        )}
+      </header>
+
+      {/* Desktop : menu latéral fixe, centré verticalement */}
+      <nav className="fixed left-0 top-1/2 z-20 hidden w-44 -translate-y-1/2 flex-col gap-4 rounded-r-lg border-2 border-l-0 border-black bg-red-600 px-5 py-8 transition duration-300 ease-in-out hover:shadow-lg lg:flex">
+        {links.map((link) => (
+          <a key={link.href} href={link.href} className={`${linkClass} hover:scale-110`}>
+            {link.label}
+          </a>
+        ))}
+      </nav>
+    </>
+  );
+};
+
+export default Header;

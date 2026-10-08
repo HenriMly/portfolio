@@ -1,141 +1,68 @@
 import React from "react";
+import Section from "./Section";
+
+// href est optionnel : sans lien, la compétence est affichée en simple texte.
+// img est optionnel : sans logo, l'initiale s'affiche dans la tuile.
+const competences = [
+  { img: "picture/react-next.png", label: "React.js / Next.js", href: "https://github.com/Arhoverse/E.S-Arques-tennis" },
+  { img: "picture/JavaScript-logo.png", label: "JavaScript", href: "https://github.com/Arhoverse/Todolist-" },
+  { img: "picture/226777_738cec596d.png", label: "Java", href: "https://github.com/Arhoverse/BattleShip" },
+  { img: "picture/c.png", label: "C, C++, C#" },
+  { img: "picture/python.jpg", label: "Python" },
+  { img: "picture/Odoo_logo_rgb.svg.png", label: "Odoo" },
+  { img: "picture/Html-css.png", label: "HTML / CSS", href: "https://github.com/Arhoverse/Todolist-" },
+  { img: "picture/sql.png", label: "SQL" },
+  { img: "picture/WP.png", label: "WordPress" },
+  { img: "picture/presta.png", label: "Prestashop" },
+  { img: "picture/php.png", label: "PHP" },
+  { img: "picture/uefn.png", label: "UEFN", href: "https://www.fortnite.com/@arhoverse" },
+  { img: "picture/git.png", label: "Git", href: "https://github.com/HenriMly" },
+  { img: "picture/ccna.png", label: "CCNA3" },
+];
+
+const itemClass = "flex items-center gap-4 text-xl md:text-2xl";
+const tileClass = "h-12 w-12 shrink-0 rounded-md bg-white md:h-14 md:w-14";
 
 const Competences = () => {
   return (
-    <div className="flex justify-center items-start ">
-      <div className="max-w-screen-md w-full ">
-        <h1 id="competences" className="text-3xl font-bold text-center max-h-screen">
-          Compétences
-        </h1>
-        <br />
-        <div className="border-4 bg-black border-black rounded-lg p-10 transition duration-300 hover:border-red-600">
-          <div className="grid grid-cols-2 gap-8">
+    <Section id="competences" title="Compétences">
+      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-8">
+        {competences.map((competence) => {
+          const content = (
+            <>
+              {competence.img ? (
+                <img src={competence.img} alt="" className={`${tileClass} object-contain p-1`} />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className={`${tileClass} flex items-center justify-center font-sans text-2xl font-bold text-black`}
+                >
+                  {competence.label[0]}
+                </span>
+              )}
+              <span className="min-w-0 break-words">{competence.label}</span>
+            </>
+          );
 
-            {/* React / Next.js */}
-            <div className="flex items-center">
-              <img src="picture/react-next.png" alt="React/Next.js" className="w-20 h-12 mr-4" />
-              <a
-                href="https://github.com/Arhoverse/E.S-Arques-tennis"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-serif"
-              >
-                React.js / Next.js
-              </a>
-            </div>
-
-            {/* JavaScript */}
-            <div className="flex items-center">
-              <img src="picture/JavaScript-logo.png" alt="JavaScript" className="w-16 h-16 mr-4" />
-              <a
-                href="https://github.com/Arhoverse/Todolist-"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-serif"
-              >
-                JavaScript
-              </a>
-            </div>
-
-            {/* Java */}
-            <div className="flex items-center">
-              <img src="picture/226777_738cec596d.png" alt="Java" className="w-16 h-16 mr-4" />
-              <a
-                href="https://github.com/Arhoverse/BattleShip"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-serif"
-              >
-                Java
-              </a>
-            </div>
-
-            {/* C / C++ / C# */}
-            <div className="flex items-center">
-              <img src="picture/c.png" alt="C / C++ / C#" className="w-14 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">C, C++, C#</p>
-            </div>
-
-            {/* Python */}
-            <div className="flex items-center">
-              <img src="picture/python.jpg" alt="Python" className="w-16 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">Python</p>
-            </div>
-
-            {/* HTML / CSS */}
-            <div className="flex items-center">
-              <img src="picture/Html-css.png" alt="HTML/CSS" className="w-20 h-16 mr-4" />
-              <a
-                href="https://github.com/Arhoverse/Todolist-"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-sans"
-              >
-                HTML / CSS
-              </a>
-            </div>
-
-            {/* SQL */}
-            <div className="flex items-center">
-              <img src="picture/sql.png" alt="SQL" className="w-20 h-10 mr-4" />
-              <p className="text-white text-3xl font-sans">SQL</p>
-            </div>
-
-            {/* WordPress */}
-            <div className="flex items-center">
-              <img src="picture/WP.png" alt="WordPress" className="w-16 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">WordPress</p>
-            </div>
-
-            {/* Prestashop */}
-            <div className="flex items-center">
-              <img src="picture/presta.png" alt="Prestashop" className="w-16 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">Prestashop</p>
-            </div>
-
-            {/* PHP */}
-            <div className="flex items-center">
-              <img src="picture/php.png" alt="PHP" className="w-25 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">PHP</p>
-            </div>
-
-            {/* UEFN */}
-            <div className="flex items-center">
-              <img src="picture/uefn.png" alt="UEFN" className="w-16 h-16 mr-4" />
-              <a
-                href="https://www.fortnite.com/@arhoverse"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-sans"
-              >
-                UEFN
-              </a>
-            </div>
-
-            {/* Git */}
-            <div className="flex items-center">
-              <img src="picture/git.png" alt="Git" className="w-16 h-16 mr-4" />
-              <a
-                href="https://github.com/HenriMly"
-                target="_blank"
-                rel="noreferrer"
-                className="text-white text-3xl font-sans"
-              >
-                Git
-              </a>
-            </div>
-
-            {/* CCNA3 */}
-            <div className="flex items-center">
-              <img src="picture/ccna.png" alt="CCNA3" className="w-16 h-16 mr-4" />
-              <p className="text-white text-3xl font-sans">CCNA3</p>
-            </div>
-          </div>
-        </div>
-        <br />
-        <br />
-      </div>
-    </div>
+          return (
+            <li key={competence.label}>
+              {competence.href ? (
+                <a
+                  href={competence.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${itemClass} transition-colors hover:text-red-500`}
+                >
+                  {content}
+                </a>
+              ) : (
+                <div className={itemClass}>{content}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
   );
 };
 

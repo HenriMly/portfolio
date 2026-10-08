@@ -1,30 +1,26 @@
 import React from "react";
-
+import Section from "./Section";
 
 const Presentation = () => {
-    return (
-        <div className="flex justify-center items-start">
-  <div className="max-w-screen-md w-full mx-4 mt-8 ">
-    <h1 id="presentation" className="text-3xl font-bold text-center ">Présentation</h1><br />
-    <div className="border-4 bg-black border-black rounded-bl-lg p-12 transition duration-300 hover:border-red-600">
-      <div className="gap-8">
-        <div className="flex ">
-          <img src="picture/moi2.jpg" alt="Image 2" className="rounded-r-lg h-56 mr-4" />
-          <a className="text-white text-2xl font-serif">
-          Henri, 20 ans, étudiant en informatique à Enigma. 
-          Je suis fasciné par le développement informatique. 
-          Mon but dans la vie? Faire disparaître les bugs 
-          plus vite que mon ombre et rendre le code aussi hilarant 
-          qu'une blague de langage de programmation ! Qui a dit que coder devait être ennuyeux?
-          </a>
-        </div>
+  return (
+    <Section id="presentation" title="Présentation">
+      <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-8">
+        <img
+          src="picture/henri.jpg"
+          alt="Henri Mailly"
+          className="aspect-[3/4] w-36 shrink-0 rounded-lg object-cover sm:w-44"
+        />
+        <p className="text-center text-lg leading-relaxed sm:text-left sm:text-xl md:text-2xl">
+          Henri, 21 ans, apprenti développeur full stack chez Securiblock
+          et étudiant en quatrième année à l'ISCOD.
+          Je suis fasciné par le développement informatique.
+          Mon but dans la vie? Faire disparaître les bugs
+          plus vite que mon ombre et rendre le code aussi hilarant
+          qu'une blague de langage de programmation&nbsp;! Qui a dit que coder devait être ennuyeux?
+        </p>
       </div>
-    </div>
-    <br /><br />
-  </div>
-</div>
+    </Section>
+  );
+};
 
-    );
-  }
-  
-  export default Presentation;
+export default Presentation;
