@@ -4,6 +4,7 @@ import Presentation from "./components/Presentation";
 import Competences from "./components/Competences";
 import Formation from "./components/formations";
 import Experiences from "./components/Experiences";
+import SpaceInvaders from "./components/SpaceInvaders";
 import Coodonnees from "./components/Coordonnees";
 import Footer from "./components/Footer";
 
@@ -19,6 +20,7 @@ const App = () => {
           <Competences />
           <Formation />
           <Experiences />
+          <SpaceInvaders />
           <Coodonnees />
         </div>
       </main>

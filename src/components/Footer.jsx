@@ -6,6 +6,7 @@ const links = [
   { href: "#competences", label: "Compétences" },
   { href: "#formations", label: "Formations" },
   { href: "#experiences", label: "Expériences" },
+  { href: "#jeu", label: "Mini-jeu" },
   { href: "#coordonnees", label: "Contact" },
 ];
 
