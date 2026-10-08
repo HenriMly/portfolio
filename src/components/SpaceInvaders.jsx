@@ -21,17 +21,24 @@ const touchButtonClass =
   "flex h-14 touch-none select-none items-center justify-center rounded-md border-2 border-white text-xl font-bold active:bg-white active:text-black";
 
 const STATUS = {
-  loading: { label: "connexion…", dot: "bg-white/40" },
-  online: { label: "en ligne", dot: "bg-green-500" },
+  loading: { label: "connexion…", dot: "bg-white/40", empty: "Chargement…" },
+  waking: {
+    label: "réveil du serveur…",
+    dot: "bg-yellow-400",
+    empty: "Le serveur se réveille, ça peut prendre une minute. Tu peux déjà jouer.",
+  },
+  online: { label: "en ligne", dot: "bg-green-500", empty: "Aucun score pour l'instant. À toi de jouer !" },
   offline: { label: "hors ligne", dot: "bg-red-500" },
 };
+
+// Le serveur garde une partie ouverte pendant une heure
+const TICKET_MAX_AGE = 50 * 60 * 1000;
 
 const SpaceInvaders = () => {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const inputRef = useRef({ left: false, right: false, fire: false });
-  const gameIdRef = useRef(null);
-  const runRef = useRef(0);
+  const ticketRef = useRef({ id: null, promise: Promise.resolve(null), issuedAt: 0, failed: true });
 
   const [phase, setPhase] = useState("idle"); // idle | playing | paused | over
   const [score, setScore] = useState(0);
@@ -50,14 +57,38 @@ const SpaceInvaders = () => {
   // Appel serveur : récupère le classement
   const loadBoard = useCallback(() => {
     setBoard((current) => ({ ...current, status: "loading" }));
+    // Hébergé gratuitement, le serveur se met en veille : sa première réponse peut prendre une minute
+    const timer = setTimeout(
+      () => setBoard((current) => (current.status === "loading" ? { ...current, status: "waking" } : current)),
+      4000
+    );
     fetchLeaderboard()
       .then((entries) => setBoard({ status: "online", entries }))
-      .catch(() => setBoard({ status: "offline", entries: [] }));
+      .catch(() => setBoard({ status: "offline", entries: [] }))
+      .finally(() => clearTimeout(timer));
+  }, []);
+
+  // Appel serveur : ouvre une partie, dont l'identifiant servira à valider le score.
+  // Fait dès l'arrivée sur la page : la partie est prête au clic sur Jouer,
+  // et cet appel réveille le serveur s'il était en veille.
+  const requestTicket = useCallback(() => {
+    const ticket = { id: null, promise: null, issuedAt: Date.now(), failed: false };
+    ticket.promise = startGame()
+      .then((gameId) => {
+        ticket.id = gameId;
+        return gameId;
+      })
+      .catch(() => {
+        ticket.failed = true;
+        return null;
+      });
+    ticketRef.current = ticket;
   }, []);
 
   useEffect(() => {
     loadBoard();
-  }, [loadBoard]);
+    requestTicket();
+  }, [loadBoard, requestTicket]);
 
   // Le canvas garde une taille logique de 400x480 quelle que soit sa taille à l'écran
   useEffect(() => {
@@ -151,27 +182,22 @@ const SpaceInvaders = () => {
     setSubmit({ status: "idle", message: "", rank: null });
     setPhase("playing");
 
-    // Appel serveur : ouvre une partie, l'identifiant servira à valider le score
-    const run = ++runRef.current;
-    gameIdRef.current = null;
-    startGame()
-      .then((gameId) => {
-        if (runRef.current === run) gameIdRef.current = gameId;
-      })
-      .catch(() => setBoard((current) => ({ ...current, status: "offline" })));
+    // La partie ouverte à l'avance est réutilisée, sauf si elle a échoué ou approche de son expiration
+    const ticket = ticketRef.current;
+    if (ticket.failed || Date.now() - ticket.issuedAt > TICKET_MAX_AGE) requestTicket();
   };
 
   // Appel serveur : envoie le score
   const send = async (event) => {
     event.preventDefault();
-    if (!gameIdRef.current) {
-      setSubmit({ status: "error", message: "Le serveur de scores était injoignable pendant cette partie.", rank: null });
-      return;
-    }
     setSubmit({ status: "sending", message: "", rank: null });
     try {
-      const result = await submitScore(gameIdRef.current, name, score);
-      gameIdRef.current = null;
+      // Si le serveur se réveillait encore, on attend que la partie soit ouverte
+      const ticket = ticketRef.current;
+      const gameId = ticket.id || (await ticket.promise);
+      if (!gameId) throw new Error("Serveur de scores injoignable.");
+      const result = await submitScore(gameId, name, score);
+      requestTicket(); // une partie ne sert qu'une fois : on prépare la suivante
       try {
         localStorage.setItem("invaders-name", name);
       } catch {
@@ -185,6 +211,8 @@ const SpaceInvaders = () => {
       });
     } catch (error) {
       setSubmit({ status: "error", message: error.message, rank: null });
+      // Partie refusée par le serveur (expirée ou déjà utilisée) : on en ouvre une autre
+      if (error.status === 409) requestTicket();
     }
   };
 
@@ -319,9 +347,7 @@ const SpaceInvaders = () => {
               </button>
             </div>
           ) : board.entries.length === 0 ? (
-            <p className="text-sm text-white/70">
-              {board.status === "loading" ? "Chargement…" : "Aucun score pour l'instant. À toi de jouer !"}
-            </p>
+            <p className="text-sm text-white/70">{STATUS[board.status].empty}</p>
           ) : (
             <ol className="space-y-1.5">
               {board.entries.map((entry, index) => (

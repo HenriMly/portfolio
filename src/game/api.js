@@ -6,9 +6,10 @@ const API_URL =
 async function request(path, options = {}) {
   if (!API_URL) throw new Error("Serveur de scores non configuré.");
 
-  // Abandon au bout de 8 s pour ne pas laisser l'interface en attente
+  // Un serveur hébergé gratuitement se met en veille et met environ une minute à se réveiller :
+  // on lui laisse ce temps avant d'abandonner
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 75000);
   let response;
   try {
     response = await fetch(API_URL + path, { ...options, signal: controller.signal });
@@ -19,14 +20,16 @@ async function request(path, options = {}) {
   }
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Erreur ${response.status}`);
+  if (!response.ok) {
+    throw Object.assign(new Error(data.error || `Erreur ${response.status}`), { status: response.status });
+  }
   return data;
 }
 
 // Top 10 : [{ name, score, date }]
 export const fetchLeaderboard = () => request("/api/scores").then((data) => data.leaderboard);
 
-// Début de partie : renvoie l'identifiant à joindre au score
+// Ouverture d'une partie : renvoie l'identifiant à joindre au score
 export const startGame = () => request("/api/games", { method: "POST" }).then((data) => data.gameId);
 
 // Fin de partie : renvoie { leaderboard, rank } (rank vaut null hors du top 10)
