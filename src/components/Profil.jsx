@@ -5,8 +5,8 @@ import Section from "./Section";
 const infos = [
   {
     img: "picture/gateau.jpg",
-    label: "21 ans",
-    href: "https://www.google.com/search?sa=X&sca_esv=6fbc5b85f7533cfa&udm=2&fbs=AIIjpHx4nJjfGojPVHhEACUHPiMQ_pbg5bWizQs3A_kIenjtcpTTqBUdyVgzq0c3_k8z34EAuM72an33lMW6RWde9ePJpwNFtZw3UQvFloZy04_0a2t90M1pjb-hlKRN5_Y-eT7ZEcVhb6tlz5ZvzwJfgnPcI9sO9tdtG4H8zxL-DrxbEkQcUjNRbZ70noEbDq9g2_ndCyCt&q=20+ans&ved=2ahUKEwjz38O5s_ePAxXQVKQEHULLFJAQtKgLegQIEBAB&biw=1920&bih=911&dpr=1",
+    label: "22 ans",
+    href: "https://fr.wikipedia.org/wiki/22,_v%27l%C3%A0_les_flics_!",
   },
   {
     img: "picture/loca.jpg",

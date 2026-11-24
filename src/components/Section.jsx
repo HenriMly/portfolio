@@ -5,8 +5,8 @@ import React from "react";
 const Section = ({ id, title, children }) => {
   return (
     <section id={id} className="scroll-mt-20 lg:scroll-mt-8">
-      <h2 className="mb-5 text-center text-2xl font-bold sm:mb-6 sm:text-3xl">{title}</h2>
-      <div className="rounded-lg border-4 border-black bg-black p-5 font-serif text-white transition duration-300 hover:border-red-600 sm:p-8">
+      <h2 className="mb-5 text-center text-2xl font-extrabold tracking-tight sm:mb-6 sm:text-3xl">{title}</h2>
+      <div className="rounded-lg border-4 border-black bg-black p-5 text-white transition duration-300 hover:border-red-600 sm:p-8">
         {children}
       </div>
     </section>

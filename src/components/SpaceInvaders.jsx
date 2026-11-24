@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import "@fontsource/silkscreen/400.css";
+import "@fontsource/silkscreen/700.css";
 import Section from "./Section";
-import { WIDTH, HEIGHT, createGame, update, draw } from "../game/engine";
+import { WIDTH, HEIGHT, POINTS, SPRITES, createGame, update, draw } from "../game/engine";
 import { fetchLeaderboard, startGame, submitScore } from "../game/api";
 
 const KEYS = {
@@ -14,21 +16,45 @@ const KEYS = {
 };
 
 const buttonClass =
-  "rounded-md border-2 border-white px-4 py-2 text-sm font-bold uppercase tracking-wide transition duration-300 hover:bg-white hover:text-black disabled:opacity-50";
+  "border-2 border-white px-4 py-2 text-sm uppercase transition-colors hover:bg-white hover:text-black disabled:opacity-50";
 const primaryButtonClass =
-  "rounded-md border-2 border-red-600 bg-red-600 px-4 py-2 text-sm font-bold uppercase tracking-wide transition duration-300 hover:border-red-500 hover:bg-red-500 disabled:opacity-50";
+  "border-2 border-red-600 bg-red-600 px-6 py-2 text-base uppercase text-white transition-colors hover:bg-black hover:text-red-500 disabled:opacity-50";
 const touchButtonClass =
-  "flex h-14 touch-none select-none items-center justify-center rounded-md border-2 border-white text-xl font-bold active:bg-white active:text-black";
+  "flex h-14 touch-none select-none items-center justify-center border-2 border-white text-base uppercase active:bg-white active:text-black";
+// font-pixel : Tailwind donne une police mono par défaut aux <kbd>
+const keyClass = "inline-flex h-6 min-w-6 items-center justify-center border border-white/40 px-1.5 font-pixel text-white";
 
-const STATUS = {
-  loading: { label: "connexion…", dot: "bg-white/40", empty: "Chargement…" },
-  waking: {
-    label: "réveil du serveur…",
-    dot: "bg-yellow-400",
-    empty: "Le serveur se réveille, ça peut prendre une minute. Tu peux déjà jouer.",
-  },
-  online: { label: "en ligne", dot: "bg-green-500", empty: "Aucun score pour l'instant. À toi de jouer !" },
-  offline: { label: "hors ligne", dot: "bg-red-500" },
+// Texte affiché à la place du classement tant qu'il est vide
+const BOARD_EMPTY = {
+  loading: "Chargement...",
+  waking: "Le serveur se réveille, ça peut prendre une minute. Tu peux déjà jouer.",
+  online: "Aucun score pour l'instant. À toi de jouer !",
+};
+
+const ALIEN_LABELS = { squid: "Alien du haut", crab: "Alien du milieu", octopus: "Alien du bas" };
+const CAPSULE = [".######.", "########", "########", "########", "########", "########", "########", ".######."];
+const ARROW_LEFT = ["..#", ".##", "###", ".##", "..#"];
+const ARROW_RIGHT = ARROW_LEFT.map((line) => [...line].reverse().join(""));
+
+const formatScore = (score) => String(score).padStart(5, "0");
+const rankLabel = (rank) => (rank === 1 ? "1er" : `${rank}e`);
+
+// Dessine un sprite du jeu en SVG : un carré par « # », dans la couleur du texte
+const PixelSprite = ({ rows, size = 2, label }) => {
+  const path = rows
+    .flatMap((line, y) => [...line].map((cell, x) => (cell === "#" ? `M${x} ${y}h1v1h-1z` : "")))
+    .join("");
+  return (
+    <svg
+      width={rows[0].length * size}
+      height={rows.length * size}
+      viewBox={`0 0 ${rows[0].length} ${rows.length}`}
+      shapeRendering="crispEdges"
+      {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}
+    >
+      <path d={path} fill="currentColor" />
+    </svg>
+  );
 };
 
 // Le serveur garde une partie ouverte pendant une heure
@@ -238,27 +264,40 @@ const SpaceInvaders = () => {
 
   return (
     <Section id="jeu" title="Mini-jeu">
-      <div className="grid gap-6 font-mono md:grid-cols-[minmax(0,1fr)_13rem]">
+      <div className="grid gap-6 font-pixel md:grid-cols-[minmax(0,1fr)_14rem]">
         <div>
           <div className="relative mx-auto w-full max-w-md">
             <canvas
               ref={canvasRef}
               role="img"
               aria-label="Space Invaders"
-              className="block aspect-[5/6] w-full rounded-md border-2 border-white/20"
+              className="block aspect-[5/6] w-full border-2 border-white/20"
             />
 
             {phase !== "playing" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-md bg-black/80 p-4 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-black/85 p-4 text-center">
                 {phase === "idle" && (
                   <>
-                    <p className="text-2xl font-bold tracking-widest sm:text-3xl">SPACE INVADERS</p>
-                    <p className="max-w-xs text-sm text-white/70">
-                      Repousse les vagues d'aliens et inscris ton score au classement.
+                    <p className="text-[32px] font-bold leading-tight">
+                      SPACE
+                      <span className="block text-red-600">INVADERS</span>
                     </p>
-                    <p className="max-w-xs text-sm text-yellow-400">
-                      Attrape les capsules jaunes : tir rapide, triple ou perçant.
-                    </p>
+
+                    <dl className="grid grid-cols-[2rem_auto] items-center gap-x-3 gap-y-2 text-left text-sm">
+                      {Object.entries(POINTS).map(([type, points]) => (
+                        <React.Fragment key={type}>
+                          <dt className="flex justify-center">
+                            <PixelSprite rows={SPRITES[type][0]} label={ALIEN_LABELS[type]} />
+                          </dt>
+                          <dd>= {points} pts</dd>
+                        </React.Fragment>
+                      ))}
+                      <dt className="flex justify-center text-yellow-400">
+                        <PixelSprite rows={CAPSULE} label="Capsule jaune" />
+                      </dt>
+                      <dd className="text-yellow-400">= bonus à attraper</dd>
+                    </dl>
+
                     <button type="button" onClick={start} className={primaryButtonClass}>
                       Jouer
                     </button>
@@ -267,7 +306,7 @@ const SpaceInvaders = () => {
 
                 {phase === "paused" && (
                   <>
-                    <p className="text-2xl font-bold tracking-widest">PAUSE</p>
+                    <p className="text-[32px] font-bold">PAUSE</p>
                     <button type="button" onClick={() => setPhase("playing")} className={primaryButtonClass}>
                       Reprendre
                     </button>
@@ -276,13 +315,14 @@ const SpaceInvaders = () => {
 
                 {phase === "over" && (
                   <>
-                    <p className="text-2xl font-bold tracking-widest text-red-500 sm:text-3xl">GAME OVER</p>
-                    <p className="text-lg">
-                      Score : <span className="font-bold">{score}</span>
+                    <p className="text-[32px] font-bold leading-tight text-red-600">GAME OVER</p>
+                    <p className="text-base">
+                      <span className="text-white/50">Score </span>
+                      {formatScore(score)}
                     </p>
 
                     {score > 0 && submit.status !== "sent" && (
-                      <form onSubmit={send} className="flex w-full max-w-[15rem] flex-col gap-2">
+                      <form onSubmit={send} className="flex w-full max-w-[15rem] flex-col gap-3">
                         <input
                           type="text"
                           value={name}
@@ -290,16 +330,16 @@ const SpaceInvaders = () => {
                           maxLength={12}
                           placeholder="Ton pseudo"
                           aria-label="Ton pseudo"
-                          className="rounded-md border-2 border-white bg-black px-3 py-2 text-center text-base text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none"
+                          className="border-b-2 border-white bg-transparent px-1 py-1 text-center text-base uppercase text-white placeholder:text-white/30 focus:border-red-500 focus:outline-none"
                         />
                         <button type="submit" disabled={submit.status === "sending"} className={buttonClass}>
-                          {submit.status === "sending" ? "Envoi…" : "Envoyer mon score"}
+                          {submit.status === "sending" ? "Envoi..." : "Envoyer mon score"}
                         </button>
                       </form>
                     )}
 
                     {submit.message && (
-                      <p className={`text-sm ${submit.status === "error" ? "text-red-500" : "text-white"}`}>
+                      <p className={`max-w-xs text-sm ${submit.status === "error" ? "text-red-500" : "text-white"}`}>
                         {submit.message}
                       </p>
                     )}
@@ -316,48 +356,62 @@ const SpaceInvaders = () => {
           {/* Commandes tactiles (mobile et tablette) */}
           <div className="mx-auto mt-3 grid max-w-md grid-cols-3 gap-3 lg:hidden">
             <button type="button" aria-label="Aller à gauche" className={touchButtonClass} {...hold("left")}>
-              ◀
+              <PixelSprite rows={ARROW_LEFT} size={4} />
             </button>
             <button type="button" aria-label="Aller à droite" className={touchButtonClass} {...hold("right")}>
-              ▶
+              <PixelSprite rows={ARROW_RIGHT} size={4} />
             </button>
             <button type="button" aria-label="Tirer" className={touchButtonClass} {...hold("fire")}>
-              TIR
+              Tir
             </button>
           </div>
-          <p className="mt-3 hidden text-center text-sm text-white/70 lg:block">
-            ← → pour bouger · Espace pour tirer · P pour la pause
+          <p className="mt-4 hidden items-center justify-center gap-6 text-xs text-white/60 lg:flex">
+            <span className="flex items-center gap-1.5">
+              <kbd className={keyClass}>
+                <PixelSprite rows={ARROW_LEFT} label="Flèche gauche" />
+              </kbd>
+              <kbd className={keyClass}>
+                <PixelSprite rows={ARROW_RIGHT} label="Flèche droite" />
+              </kbd>
+              bouger
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className={keyClass}>Espace</kbd>
+              tirer
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className={keyClass}>P</kbd>
+              pause
+            </span>
           </p>
         </div>
 
         <aside>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h3 className="font-sans text-lg font-bold">Classement</h3>
-            <span className="flex items-center gap-1.5 text-xs text-white/70">
-              <span className={`h-2 w-2 rounded-full ${STATUS[board.status].dot}`} />
-              {STATUS[board.status].label}
-            </span>
-          </div>
+          <h3 className="mb-4 text-base font-bold uppercase text-red-500">Meilleurs scores</h3>
 
           {board.status === "offline" ? (
-            <div className="space-y-3 text-sm text-white/70">
+            <div className="space-y-3 text-sm text-white/60">
               <p>Serveur de scores injoignable. Tu peux quand même jouer.</p>
               <button type="button" onClick={loadBoard} className={buttonClass}>
                 Réessayer
               </button>
             </div>
           ) : board.entries.length === 0 ? (
-            <p className="text-sm text-white/70">{STATUS[board.status].empty}</p>
+            <p className="text-sm text-white/60">{BOARD_EMPTY[board.status]}</p>
           ) : (
-            <ol className="space-y-1.5">
+            <ol className="space-y-2 text-sm">
               {board.entries.map((entry, index) => (
                 <li
                   key={`${entry.date}-${index}`}
-                  className={`flex items-baseline gap-2 ${submit.rank === index + 1 ? "font-bold text-red-500" : ""}`}
+                  className={`flex items-end gap-2 ${submit.rank === index + 1 ? "text-red-500" : ""}`}
                 >
-                  <span className="w-6 shrink-0 text-right opacity-60">{index + 1}.</span>
-                  <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                  <span className="tabular-nums">{entry.score}</span>
+                  <span className="w-8 shrink-0 opacity-50">{rankLabel(index + 1)}</span>
+                  <span className="min-w-0 truncate uppercase">{entry.name}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mb-1 min-w-4 flex-1 border-b-2 border-dotted border-current opacity-25"
+                  />
+                  <span>{formatScore(entry.score)}</span>
                 </li>
               ))}
             </ol>

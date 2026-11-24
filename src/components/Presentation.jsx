@@ -11,7 +11,7 @@ const Presentation = () => {
           className="aspect-[3/4] w-36 shrink-0 rounded-lg object-cover sm:w-44"
         />
         <p className="text-center text-lg leading-relaxed sm:text-left sm:text-xl md:text-2xl">
-          Henri, 21 ans, apprenti développeur full stack chez Securiblock
+          Henri, 22 ans, apprenti développeur full stack chez Securiblock
           et étudiant en quatrième année à l'ISCOD.
           Je suis fasciné par le développement informatique.
           Mon but dans la vie? Faire disparaître les bugs

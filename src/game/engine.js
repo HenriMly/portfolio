@@ -26,7 +26,7 @@ const RAPID_COOLDOWN = 0.16;
 const TRIPLE_SPREAD = 90; // vitesse latérale des deux tirs de côté
 const PIERCE_COUNT = 3; // nombre d'aliens traversés par un tir perçant
 const POWER_DURATION = 10;
-const POINTS = { squid: 30, crab: 20, octopus: 10 };
+export const POINTS = { squid: 30, crab: 20, octopus: 10 };
 
 // Les bonus tombent en zigzag, plus vite sur les côtés que le vaisseau : il faut anticiper
 const BONUS_SIZE = 16;
@@ -74,7 +74,7 @@ function formationFor(wave) {
 }
 
 // Chaque alien a deux images pour l'animation
-const SPRITES = {
+export const SPRITES = {
   squid: [
     ["...##...", "..####..", ".######.", "##.##.##", "########", "..#..#..", ".#.##.#.", "#.#..#.#"],
     ["...##...", "..####..", ".######.", "##.##.##", "########", ".#.##.#.", "#......#", ".#....#."],
@@ -408,20 +408,102 @@ function drawSprite(ctx, rows, x, y, px, color) {
   });
 }
 
+// Police pixel 5x7 faite main : le texte suit la même grille que les sprites
+const FONT = {
+  A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+  B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+  C: [".###.", "#...#", "#....", "#....", "#....", "#...#", ".###."],
+  D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+  E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
+  F: ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
+  G: [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".####"],
+  H: ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+  I: [".###.", "..#..", "..#..", "..#..", "..#..", "..#..", ".###."],
+  J: ["..###", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##.."],
+  K: ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
+  L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+  M: ["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
+  N: ["#...#", "#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#"],
+  O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+  P: ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
+  Q: [".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#"],
+  R: ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
+  S: [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
+  T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
+  U: ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+  V: ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
+  W: ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "#.#.#", ".#.#."],
+  X: ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
+  Y: ["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
+  Z: ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
+  0: [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
+  1: ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."],
+  2: [".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"],
+  3: ["#####", "...#.", "..#..", "...#.", "....#", "#...#", ".###."],
+  4: ["...#.", "..##.", ".#.#.", "#..#.", "#####", "...#.", "...#."],
+  5: ["#####", "#....", "####.", "....#", "....#", "#...#", ".###."],
+  6: ["..##.", ".#...", "#....", "####.", "#...#", "#...#", ".###."],
+  7: ["#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."],
+  8: [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
+  9: [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
+  "!": ["..#..", "..#..", "..#..", "..#..", "..#..", ".....", "..#.."],
+};
+
+// Les accents se posent sur la lettre de base : É = E + accent aigu
+const ACCENTS = {
+  "̀": { rows: ["#..", ".#."], row: -3 }, // grave
+  "́": { rows: ["..#", ".#."], row: -3 }, // aigu
+  "̂": { rows: [".#.", "#.#"], row: -3 }, // circonflexe
+  "̧": { rows: [".#.", "##."], row: 7 }, // cédille
+};
+const GLYPH_ADVANCE = 6; // 5 colonnes de lettre + 1 d'espace
+
+const textWidth = (text, px) => ([...text].length * GLYPH_ADVANCE - 1) * px;
+
+// Écrit le texte et renvoie l'abscisse où il s'arrête, pour enchaîner dans une autre couleur
+function drawText(ctx, text, x, y, px, color) {
+  let left = x;
+  for (const char of text) {
+    const [base, ...marks] = char.normalize("NFD");
+    if (FONT[base]) drawSprite(ctx, FONT[base], left, y, px, color);
+    for (const mark of marks) {
+      const accent = ACCENTS[mark];
+      if (accent) drawSprite(ctx, accent.rows, left + px, y + accent.row * px, px, color);
+    }
+    left += GLYPH_ADVANCE * px;
+  }
+  return left;
+}
+
+function drawCentered(ctx, text, y, px, color) {
+  drawText(ctx, text, (WIDTH - textWidth(text, px)) / 2, y, px, color);
+}
+
+// Lettres 3x5 des capsules de bonus, trop petites pour la police normale
+const CAPSULE_LETTERS = {
+  R: ["##.", "#.#", "##.", "#.#", "#.#"],
+  T: ["###", ".#.", ".#.", ".#.", ".#."],
+  P: ["##.", "#.#", "##.", "#..", "#.."],
+};
+
+// Carré aux coins coupés : un arrondi au pixel près
+function fillCapsule(ctx, x, y, w, h) {
+  ctx.fillRect(x + 2, y, w - 4, h);
+  ctx.fillRect(x, y + 2, w, h - 4);
+  ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+}
+
 export function draw(ctx, game) {
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // Score, vague et vies
-  ctx.fillStyle = WHITE;
-  ctx.font = "bold 14px monospace";
-  ctx.textBaseline = "top";
-  ctx.textAlign = "left";
-  ctx.fillText(`SCORE ${String(game.score).padStart(5, "0")}`, 10, 10);
-  ctx.textAlign = "center";
-  ctx.fillText(`VAGUE ${game.wave}`, WIDTH / 2, 10);
+  // Score, vague et vies : intitulés en rouge, valeurs en blanc
+  const scoreEnd = drawText(ctx, "SCORE ", 10, 10, 2, RED);
+  drawText(ctx, String(game.score).padStart(5, "0"), scoreEnd, 10, 2, WHITE);
+  const waveEnd = drawText(ctx, "VAGUE ", (WIDTH - textWidth(`VAGUE ${game.wave}`, 2)) / 2, 10, 2, RED);
+  drawText(ctx, String(game.wave), waveEnd, 10, 2, WHITE);
   for (let i = 0; i < game.lives; i++) {
-    drawSprite(ctx, PLAYER_SPRITE, WIDTH - 10 - (i + 1) * 18, 12, 1, RED);
+    drawSprite(ctx, PLAYER_SPRITE, WIDTH - 10 - (i + 1) * 18, 13, 1, RED);
   }
 
   const frame = Math.floor(game.frameTimer / 0.5) % 2;
@@ -446,46 +528,37 @@ export function draw(ctx, game) {
   game.alienBullets.forEach((bullet) => ctx.fillRect(Math.round(bullet.x), Math.round(bullet.y), bullet.w, bullet.h));
 
   // Bonus : capsule jaune marquée d'une lettre, avec un contour qui clignote
-  ctx.font = "bold 12px monospace";
-  ctx.textBaseline = "middle";
   game.bonuses.forEach((bonus) => {
     const x = Math.round(bonus.x);
     const y = Math.round(bonus.y);
     if (Math.floor(bonus.age * 8) % 2 === 0) {
       ctx.fillStyle = WHITE;
-      ctx.fillRect(x - 1, y - 1, bonus.w + 2, bonus.h + 2);
+      fillCapsule(ctx, x - 1, y - 1, bonus.w + 2, bonus.h + 2);
     }
     ctx.fillStyle = YELLOW;
-    ctx.fillRect(x, y, bonus.w, bonus.h);
-    ctx.fillStyle = "#000000";
-    ctx.fillText(POWERS[bonus.type].letter, x + bonus.w / 2, y + bonus.h / 2 + 1);
+    fillCapsule(ctx, x, y, bonus.w, bonus.h);
+    const letter = CAPSULE_LETTERS[POWERS[bonus.type].letter];
+    drawSprite(ctx, letter, x + bonus.w / 2 - 3, y + bonus.h / 2 - 5, 2, "#000000");
   });
-  ctx.textBaseline = "top";
 
   game.effects.forEach((effect) => drawSprite(ctx, EXPLOSION_SPRITE, effect.x - 7, effect.y - 7, PX, WHITE));
 
   ctx.fillStyle = RED;
   ctx.fillRect(0, GROUND_Y, WIDTH, 2);
 
-  // Bonus en cours : nom et temps restant, sous la ligne du sol
+  // Bonus en cours : nom et jauge du temps restant, sous la ligne du sol
   if (player.power) {
+    drawText(ctx, POWERS[player.power.type].label, 10, GROUND_Y + 5, 1, YELLOW);
+    ctx.fillStyle = "rgba(250, 204, 21, 0.25)";
+    ctx.fillRect(90, GROUND_Y + 6, 80, 5);
     ctx.fillStyle = YELLOW;
-    ctx.font = "bold 10px monospace";
-    ctx.textAlign = "left";
-    ctx.fillText(POWERS[player.power.type].label, 10, GROUND_Y + 5);
-    ctx.fillRect(90, GROUND_Y + 7, 80 * (player.power.time / POWER_DURATION), 5);
-    ctx.textAlign = "center";
+    ctx.fillRect(90, GROUND_Y + 6, 80 * (player.power.time / POWER_DURATION), 5);
   }
 
   if (game.waveDelay > 0) {
-    ctx.fillStyle = WHITE;
-    ctx.font = "bold 22px monospace";
-    ctx.fillText(`VAGUE ${game.wave}`, WIDTH / 2, HEIGHT / 2 - 40);
-    ctx.font = "bold 12px monospace";
-    ctx.fillText(formationFor(game.wave).name, WIDTH / 2, HEIGHT / 2 - 12);
+    drawCentered(ctx, `VAGUE ${game.wave}`, HEIGHT / 2 - 40, 3, WHITE);
+    drawCentered(ctx, formationFor(game.wave).name, HEIGHT / 2 - 6, 2, RED);
   } else if (game.notice) {
-    ctx.fillStyle = YELLOW;
-    ctx.font = "bold 16px monospace";
-    ctx.fillText(game.notice.text, WIDTH / 2, HEIGHT / 2 + 10);
+    drawCentered(ctx, game.notice.text, HEIGHT / 2 + 10, 2, YELLOW);
   }
 }
